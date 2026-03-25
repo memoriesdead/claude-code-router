@@ -8,9 +8,10 @@ Install Claude Code Router globally using your preferred package manager.
 
 ## Prerequisites
 
-- **Node.js**: >= 18.0.0
+- **Node.js**: >= 20.0.0
 - **pnpm**: >= 8.0.0 (if using pnpm)
-- An API key from your preferred LLM provider
+- A free Gemini API key from https://aistudio.google.com/apikey
+- (Optional) ChatGPT Plus subscription + OpenAI Codex CLI for GPT-5.4 access
 
 ## Install via npm
 

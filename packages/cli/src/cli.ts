@@ -18,6 +18,7 @@ import { join } from "path";
 import { parseStatusLineData, StatusLineInput } from "./utils/statusline";
 import {handlePresetCommand} from "./utils/preset";
 import { handleInstallCommand } from "./utils/installCommand";
+import { needsSetup, runSetupWizard } from "./utils/setupWizard";
 
 
 const command = process.argv[2];
@@ -30,6 +31,7 @@ const KNOWN_COMMANDS = [
   "status",
   "statusline",
   "code",
+  "setup",
   "model",
   "preset",
   "install",
@@ -50,6 +52,7 @@ Commands:
   stop          Stop server
   restart       Restart server
   status        Show server status
+  setup         Interactive first-time setup wizard
   statusline    Integrated statusline
   code          Execute claude command
   model         Interactive model selection and configuration
@@ -208,7 +211,17 @@ async function main() {
     }
   }
 
+  // Auto-trigger setup wizard if no providers configured
+  if (["start", "code", undefined].includes(command)) {
+    if (await needsSetup()) {
+      await runSetupWizard();
+    }
+  }
+
   switch (command) {
+    case "setup":
+      await runSetupWizard();
+      break;
     case "start":
       await run();
       break;

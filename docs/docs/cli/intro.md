@@ -24,6 +24,12 @@ Claude Code Router CLI (`ccr`) is a command-line tool for managing and controlli
 npm install -g @musistudio/claude-code-router
 ```
 
+Or run directly without installing:
+
+```bash
+npx @musistudio/claude-code-router start
+```
+
 ## Basic Usage
 
 ### Configuration

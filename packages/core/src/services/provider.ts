@@ -29,11 +29,14 @@ export class ProviderService {
   private initializeFromProvidersArray(providersConfig: ConfigProvider[]) {
     providersConfig.forEach((providerConfig: ConfigProvider) => {
       try {
+        // For browser auth, apiKey is not required
+        const needsApiKey = providerConfig.auth_type !== "browser";
         if (
           !providerConfig.name ||
           !providerConfig.api_base_url ||
-          !providerConfig.api_key
+          (needsApiKey && !providerConfig.api_key)
         ) {
+          this.logger.warn(`Skipping provider ${providerConfig.name}: missing required fields`);
           return;
         }
 
@@ -87,6 +90,8 @@ export class ProviderService {
           name: providerConfig.name,
           baseUrl: providerConfig.api_base_url,
           apiKey: providerConfig.api_key,
+          authType: providerConfig.auth_type,
+          browserAuth: providerConfig.browser_auth,
           models: providerConfig.models || [],
           transformer: providerConfig.transformer ? transformer : undefined,
         });
@@ -101,6 +106,9 @@ export class ProviderService {
   registerProvider(request: RegisterProviderRequest): LLMProvider {
     const provider: LLMProvider = {
       ...request,
+      // Set default auth type if not specified
+      authType: request.authType || (request.apiKey ? "api_key" : "browser"),
+      browserAuth: request.browserAuth,
     };
 
     this.providers.set(provider.name, provider);

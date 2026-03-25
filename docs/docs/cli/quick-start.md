@@ -6,70 +6,120 @@ sidebar_position: 3
 
 Get up and running with Claude Code Router in 5 minutes.
 
-## 1. Configure the Router
+## 1. Install
 
-Before using Claude Code Router, you need to configure your LLM providers. You can either:
+```bash
+npm install -g @musistudio/claude-code-router
+```
 
-### Option A: Edit Configuration File Directly
+Or run without installing:
+
+```bash
+npx @musistudio/claude-code-router start
+```
+
+## 2. Set Up Providers
+
+### Gemini (free - default for everything)
+
+1. Go to https://aistudio.google.com/apikey and create a free API key
+2. Set it in your shell:
+
+```bash
+export GEMINI_API_KEY="your-gemini-key"
+```
+
+### ChatGPT (optional - uses your $20/mo Plus subscription)
+
+1. Install OpenAI Codex CLI:
+```bash
+npm install -g @openai/codex
+```
+
+2. Sign in with your ChatGPT account:
+```bash
+codex login
+```
+
+3. A browser window opens - log in with your ChatGPT Plus account
+4. Token is saved to `~/.codex/auth.json` automatically
+
+No separate API key needed. The router reads your Codex OAuth token and uses your subscription credits.
+
+## 3. Configure the Router
 
 Edit `~/.claude-code-router/config.json`:
 
 ```json
 {
-  "HOST": "0.0.0.0",
-  "PORT": 8080,
   "Providers": [
     {
-      "name": "openai",
+      "name": "gemini",
+      "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+      "api_key": "$GEMINI_API_KEY",
+      "models": ["gemini-3.1-pro", "gemini-2.5-pro", "gemini-2.5-flash"],
+      "transformer": { "use": ["gemini"] }
+    },
+    {
+      "name": "chatgpt",
       "api_base_url": "https://api.openai.com/v1/chat/completions",
-      "api_key": "your-api-key-here",
-      "models": ["gpt-4", "gpt-3.5-turbo"]
+      "auth_type": "browser",
+      "models": ["gpt-5.4-turbo", "gpt-4o"],
+      "transformer": { "use": ["browser-auth"] }
     }
   ],
   "Router": {
-    "default": "openai,gpt-4"
+    "default": "gemini,gemini-3.1-pro",
+    "think": "chatgpt,gpt-5.4-turbo",
+    "background": "gemini,gemini-2.5-flash",
+    "longContext": "gemini,gemini-2.5-pro",
+    "longContextThreshold": 60000,
+    "webSearch": "gemini,gemini-2.5-flash"
   }
 }
 ```
 
-### Option B: Use Web UI
+Or use the Web UI:
 
 ```bash
 ccr ui
 ```
 
-This will open the web interface where you can configure providers visually.
-
-## 2. Start the Router
+## 4. Start the Router
 
 ```bash
 ccr start
 ```
 
-The router will start on `http://localhost:8080` by default.
+The router starts on `http://localhost:3456` by default.
 
-## 3. Use Claude Code
-
-Now you can use Claude Code normally:
+## 5. Use Claude Code
 
 ```bash
 ccr code
 ```
 
-Your requests will be routed through Claude Code Router to your configured provider.
+Your requests are routed through Claude Code Router to your configured providers.
 
-## Restart After Configuration Changes
+## 6. Switch Models On-the-Fly
 
-If you modify the configuration file or make changes through the Web UI, restart the service:
+Type `/model provider,model` in Claude Code to switch models mid-conversation:
+
+```
+/model gemini,gemini-3.1-pro
+/model chatgpt,gpt-5.4-turbo
+/model chatgpt,gpt-4o
+```
+
+## Restart After Config Changes
 
 ```bash
 ccr restart
 ```
 
-Or restart directly through the Web UI.
-
 ## What's Next?
 
 - [Basic Configuration](/docs/cli/config/basic) - Learn about configuration options
-- [Routing](/docs/cli/config/routing) - Configure smart routing rules
+- [Routing](/docs/server/config/routing) - Configure smart routing rules
+- [Model Switching](/docs/cli/commands/model) - All model commands
 - [CLI Commands](/docs/category/cli-commands) - Explore all CLI commands

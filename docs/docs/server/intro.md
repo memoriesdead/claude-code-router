@@ -110,7 +110,7 @@ The CCR server integrates `@musistudio/llms` through:
 
 ### Version and Updates
 
-The current version of `@musistudio/llms` is `1.0.51`. It's published as an independent npm package and can be used standalone or as part of CCR Server.
+It's published as an independent npm package and can be used standalone or as part of CCR Server.
 
 ## Core Features
 

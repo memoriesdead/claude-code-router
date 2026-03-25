@@ -22,7 +22,7 @@ Interactively select a model:
 ccr model
 ```
 
-This will display an interactive menu with available providers and models.
+This displays an interactive menu with all configured providers and models.
 
 ### Set Default Model
 
@@ -32,10 +32,12 @@ Set the default model directly:
 ccr model set <provider>,<model>
 ```
 
-Example:
+Examples:
 
 ```bash
-ccr model set deepseek,deepseek-chat
+ccr model set gemini,gemini-3.1-pro
+ccr model set chatgpt,gpt-5.4-turbo
+ccr model set chatgpt,gpt-4o
 ```
 
 ### List Models
@@ -54,12 +56,6 @@ Add a new model to configuration:
 ccr model add <provider>,<model>
 ```
 
-Example:
-
-```bash
-ccr model add groq,llama-3.3-70b-versatile
-```
-
 ### Remove Model
 
 Remove a model from configuration:
@@ -68,6 +64,19 @@ Remove a model from configuration:
 ccr model remove <provider>,<model>
 ```
 
+## In-Session Model Switching
+
+While using Claude Code via `ccr code`, you can switch models on-the-fly by typing `/model` followed by `provider,model`:
+
+```
+/model gemini,gemini-3.1-pro
+/model chatgpt,gpt-5.4-turbo
+/model chatgpt,gpt-4o
+/model openrouter,anthropic/claude-opus-4-20250514
+```
+
+This bypasses all scenario routing and sends requests directly to the specified provider+model. The switch takes effect immediately for subsequent messages.
+
 ## Examples
 
 ### Interactive selection
@@ -75,34 +84,26 @@ ccr model remove <provider>,<model>
 ```bash
 $ ccr model
 
-? Select a provider: deepseek
-? Select a model: deepseek-chat
+? Select a provider: gemini
+? Select a model: gemini-3.1-pro
 
-Default model set to: deepseek,deepseek-chat
-```
-
-### Direct configuration
-
-```bash
-ccr model set deepseek,deepseek-chat
+Default model set to: gemini,gemini-3.1-pro
 ```
 
 ### View current configuration
 
 ```bash
-ccr model list
-```
+$ ccr model list
 
-Output:
-
-```
 Configured Models:
-  deepseek,deepseek-chat (default)
-  groq,llama-3.3-70b-versatile
-  gemini,gemini-1.5-pro
+  gemini,gemini-3.1-pro (default)
+  gemini,gemini-2.5-pro
+  gemini,gemini-2.5-flash
+  chatgpt,gpt-5.4-turbo (think)
+  chatgpt,gpt-4o
 ```
 
 ## Related Commands
 
-- [ccr start](/docs/cli/start) - Start the server
-- [ccr config](/docs/cli/other-commands#ccr-config) - Edit configuration
+- [ccr start](/docs/cli/commands/start) - Start the server
+- [ccr status](/docs/cli/commands/status) - View service status

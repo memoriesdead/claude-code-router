@@ -333,11 +333,12 @@ async function sendRequestToProvider(
   }
 
   // Send HTTP request
-  // Prepare headers
-  const requestHeaders: Record<string, string> = {
-    Authorization: `Bearer ${provider.apiKey}`,
-    ...(config?.headers || {}),
-  };
+  // Prepare headers - skip Authorization for browser auth
+  const requestHeaders: Record<string, string> = {};
+  if (provider.authType !== "browser" && provider.apiKey) {
+    requestHeaders.Authorization = `Bearer ${provider.apiKey}`;
+  }
+  Object.assign(requestHeaders, config?.headers || {});
 
   for (const key in requestHeaders) {
     if (requestHeaders[key] === "undefined") {
@@ -497,12 +498,13 @@ export const registerApiRoutes = async (
           properties: {
             id: { type: "string" },
             name: { type: "string" },
-            type: { type: "string", enum: ["openai", "anthropic"] },
+            type: { type: "string", enum: ["openai", "anthropic", "browser"] },
             baseUrl: { type: "string" },
             apiKey: { type: "string" },
+            auth_type: { type: "string", enum: ["api_key", "browser"] },
             models: { type: "array", items: { type: "string" } },
           },
-          required: ["id", "name", "type", "baseUrl", "apiKey", "models"],
+          required: ["id", "name", "type", "baseUrl", "models"],
         },
       },
     },
@@ -511,7 +513,7 @@ export const registerApiRoutes = async (
       reply: FastifyReply
     ) => {
       // Validation
-      const { name, baseUrl, apiKey, models } = request.body;
+      const { name, baseUrl, apiKey, auth_type, models } = request.body;
 
       if (!name?.trim()) {
         throw createApiError(
@@ -530,7 +532,10 @@ export const registerApiRoutes = async (
       }
 
       if (!apiKey?.trim()) {
-        throw createApiError("API key is required", 400, "invalid_request");
+        // For browser auth, API key is optional
+        if (request.body.type !== "browser" && request.body.auth_type !== "browser") {
+          throw createApiError("API key is required", 400, "invalid_request");
+        }
       }
 
       if (!models || !Array.isArray(models) || models.length === 0) {
@@ -593,9 +598,10 @@ export const registerApiRoutes = async (
           type: "object",
           properties: {
             name: { type: "string" },
-            type: { type: "string", enum: ["openai", "anthropic"] },
+            type: { type: "string", enum: ["openai", "anthropic", "browser"] },
             baseUrl: { type: "string" },
             apiKey: { type: "string" },
+            auth_type: { type: "string", enum: ["api_key", "browser"] },
             models: { type: "array", items: { type: "string" } },
             enabled: { type: "boolean" },
           },

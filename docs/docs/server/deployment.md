@@ -83,16 +83,27 @@ Configuration file example:
   // LLM provider configuration
   "Providers": [
     {
-      "name": "openai",
-      "baseUrl": "https://api.openai.com/v1",
-      "apiKey": "$OPENAI_API_KEY",
-      "models": ["gpt-4", "gpt-3.5-turbo"]
+      "name": "gemini",
+      "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+      "api_key": "$GEMINI_API_KEY",
+      "models": ["gemini-3.1-pro", "gemini-2.5-pro", "gemini-2.5-flash"],
+      "transformer": { "use": ["gemini"] }
+    },
+    {
+      // Uses ChatGPT Plus subscription via Codex OAuth (no API key needed)
+      "name": "chatgpt",
+      "api_base_url": "https://api.openai.com/v1/chat/completions",
+      "auth_type": "browser",
+      "models": ["gpt-5.4-turbo", "gpt-4o"],
+      "transformer": { "use": ["browser-auth"] }
     }
   ],
 
   // Routing configuration
   "Router": {
-    "default": "openai,gpt-4"
+    "default": "gemini,gemini-3.1-pro",
+    "think": "chatgpt,gpt-5.4-turbo",
+    "background": "gemini,gemini-2.5-flash"
   }
 }
 ```

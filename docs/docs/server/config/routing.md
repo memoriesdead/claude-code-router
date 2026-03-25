@@ -4,7 +4,21 @@ sidebar_position: 3
 
 # Routing Configuration
 
-Configure how requests are routed to different models.
+Configure how requests are routed to different models based on the task type.
+
+## Routing Priority
+
+The router evaluates requests in this order:
+
+1. **Explicit model** - `/model provider,model` bypasses all routing
+2. **Custom router** - JavaScript function via `CUSTOM_ROUTER_PATH`
+3. **Project/session config** - Per-project overrides
+4. **Long context** - Token count exceeds `longContextThreshold`
+5. **Subagent model** - `<CCR-SUBAGENT-MODEL>` tag in system prompt
+6. **Background** - Model name contains "claude" + "haiku"
+7. **Web search** - Request includes `web_search` tools
+8. **Think mode** - `req.body.thinking` is set (Plan Mode)
+9. **Default** - Falls through to `Router.default`
 
 ## Default Routing
 
@@ -13,46 +27,63 @@ Set the default model for all requests:
 ```json
 {
   "Router": {
-    "default": "deepseek,deepseek-chat"
+    "default": "gemini,gemini-3.1-pro"
   }
 }
 ```
 
 ## Built-in Scenarios
 
-### Background Tasks
-
-Route background tasks to a lightweight model:
+### Recommended Configuration
 
 ```json
 {
   "Router": {
-    "background": "groq,llama-3.3-70b-versatile"
+    "default": "gemini,gemini-3.1-pro",
+    "background": "gemini,gemini-2.5-flash",
+    "think": "chatgpt,gpt-5.4-turbo",
+    "longContext": "gemini,gemini-2.5-pro",
+    "longContextThreshold": 60000,
+    "webSearch": "gemini,gemini-2.5-flash"
+  }
+}
+```
+
+This routes most tasks to Gemini (free) and thinking tasks to ChatGPT (via your Plus subscription).
+
+### Background Tasks
+
+Route lightweight tasks (title generation, summaries) to a fast, cheap model:
+
+```json
+{
+  "Router": {
+    "background": "gemini,gemini-2.5-flash"
   }
 }
 ```
 
 ### Thinking Mode (Plan Mode)
 
-Route thinking-intensive tasks to a more capable model:
+Route thinking-intensive tasks to a model with extended thinking:
 
 ```json
 {
   "Router": {
-    "think": "deepseek,deepseek-chat"
+    "think": "chatgpt,gpt-5.4-turbo"
   }
 }
 ```
 
 ### Long Context
 
-Route requests with long context:
+Route requests exceeding the token threshold to a model with large context window:
 
 ```json
 {
   "Router": {
-    "longContextThreshold": 100000,
-    "longContext": "gemini,gemini-1.5-pro"
+    "longContextThreshold": 60000,
+    "longContext": "gemini,gemini-2.5-pro"
   }
 }
 ```
@@ -64,7 +95,7 @@ Route web search tasks:
 ```json
 {
   "Router": {
-    "webSearch": "deepseek,deepseek-chat"
+    "webSearch": "gemini,gemini-2.5-flash"
   }
 }
 ```
@@ -76,128 +107,59 @@ Route image-related tasks:
 ```json
 {
   "Router": {
-    "image": "gemini,gemini-1.5-pro"
+    "image": "gemini,gemini-2.5-pro"
   }
 }
 ```
 
-## Fallback
+## Fallback Configuration
 
-When a request fails, you can configure a list of backup models. The system will try each model in sequence until one succeeds:
-
-### Basic Configuration
+When a provider returns an error, the fallback chain tries alternatives:
 
 ```json
 {
-  "Router": {
-    "default": "deepseek,deepseek-chat",
-    "background": "ollama,qwen2.5-coder:latest",
-    "think": "deepseek,deepseek-reasoner",
-    "longContext": "openrouter,google/gemini-2.5-pro-preview",
-    "longContextThreshold": 60000,
-    "webSearch": "gemini,gemini-2.5-flash"
-  },
   "fallback": {
-    "default": [
-      "aihubmix,Z/glm-4.5",
-      "openrouter,anthropic/claude-sonnet-4"
-    ],
-    "background": [
-      "ollama,qwen2.5-coder:latest"
-    ],
-    "think": [
-      "openrouter,anthropic/claude-3.7-sonnet:thinking"
-    ],
-    "longContext": [
-      "modelscope,Qwen/Qwen3-Coder-480B-A35B-Instruct"
-    ],
-    "webSearch": [
-      "openrouter,anthropic/claude-sonnet-4"
-    ]
+    "default": ["chatgpt,gpt-4o", "openrouter,anthropic/claude-sonnet-4-20250514"],
+    "think": ["gemini,gemini-3.1-pro", "openrouter,anthropic/claude-opus-4-20250514"],
+    "background": ["chatgpt,gpt-4o"]
   }
 }
 ```
 
-### How It Works
+### How Fallback Works
 
-1. **Trigger**: When a model request fails for a routing scenario (HTTP error response)
-2. **Auto-switch**: The system automatically checks the fallback configuration for that scenario
-3. **Sequential retry**: Tries each backup model in order
-4. **Success**: Once a model responds successfully, returns immediately
-5. **All failed**: If all backup models fail, returns the original error
+1. Primary model request fails (HTTP error)
+2. System checks fallback list for that scenario
+3. Tries each backup model in order
+4. Returns the first successful response
+5. If all fail, returns the original error
 
 ### Configuration Details
 
-- **Format**: Each backup model format is `provider,model`
-- **Validation**: Backup models must exist in the `Providers` configuration
-- **Flexibility**: Different scenarios can have different fallback lists
-- **Optional**: If a scenario doesn't need fallback, omit it or use an empty array
+- **Format**: `provider,model` - must match a configured provider
+- **Per-scenario**: Each scenario can have its own fallback list
+- **Optional**: Omit a scenario or use `[]` if no fallback needed
 
-### Use Cases
+## Model Switching with /model
 
-#### Scenario 1: Primary Model Quota Exhausted
-
-```json
-{
-  "Router": {
-    "default": "openrouter,anthropic/claude-sonnet-4"
-  },
-  "fallback": {
-    "default": [
-      "deepseek,deepseek-chat",
-      "aihubmix,Z/glm-4.5"
-    ]
-  }
-}
-```
-
-Automatically switches to backup models when the primary model quota is exhausted.
-
-#### Scenario 2: Service Reliability
-
-```json
-{
-  "Router": {
-    "background": "volcengine,deepseek-v3-250324"
-  },
-  "fallback": {
-    "background": [
-      "modelscope,Qwen/Qwen3-Coder-480B-A35B-Instruct",
-      "dashscope,qwen3-coder-plus"
-    ]
-  }
-}
-```
-
-Automatically switches to other providers when the primary service fails.
-
-### Log Monitoring
-
-The system logs detailed fallback process:
+Users can switch models mid-conversation by typing `/model provider,model` in Claude Code:
 
 ```
-[warn] Request failed for default, trying 2 fallback models
-[info] Trying fallback model: aihubmix,Z/glm-4.5
-[warn] Fallback model aihubmix,Z/glm-4.5 failed: API rate limit exceeded
-[info] Trying fallback model: openrouter,anthropic/claude-sonnet-4
-[info] Fallback model openrouter,anthropic/claude-sonnet-4 succeeded
+/model gemini,gemini-3.1-pro      # Switch to Gemini 3.1
+/model chatgpt,gpt-5.4-turbo     # Switch to GPT-5.4
+/model chatgpt,gpt-4o            # Switch to GPT-4o
 ```
 
-### Important Notes
-
-1. **Cost consideration**: Backup models may incur different costs, configure appropriately
-2. **Performance differences**: Different models may have varying response speeds and quality
-3. **Quota management**: Ensure backup models have sufficient quotas
-4. **Testing**: Regularly test the availability of backup models
+When `/model` is used, the router detects the comma in `req.body.model` and bypasses all scenario routing, sending directly to the specified provider+model.
 
 ## Project-Level Routing
 
-Configure routing per project in `~/.claude/projects/<project-id>/claude-code-router.json`:
+Override routing per project in `~/.claude/projects/<project-id>/claude-code-router.json`:
 
 ```json
 {
   "Router": {
-    "default": "groq,llama-3.3-70b-versatile"
+    "default": "chatgpt,gpt-5.4-turbo"
   }
 }
 ```
@@ -208,50 +170,39 @@ Project-level configuration takes precedence over global configuration.
 
 Create a custom JavaScript router function:
 
-1. Create a router file (e.g., `custom-router.js`):
-
 ```javascript
+// custom-router.js
 module.exports = function(config, context) {
-  // Analyze the request context
   const { scenario, projectId, tokenCount } = context;
 
-  // Custom routing logic
   if (scenario === 'background') {
-    return 'groq,llama-3.3-70b-versatile';
+    return 'gemini,gemini-2.5-flash';
   }
 
   if (tokenCount > 100000) {
-    return 'gemini,gemini-1.5-pro';
+    return 'gemini,gemini-2.5-pro';
   }
 
-  // Default
-  return 'deepseek,deepseek-chat';
+  return 'gemini,gemini-3.1-pro';
 };
 ```
 
-2. Set the `CUSTOM_ROUTER_PATH` environment variable:
-
-```bash
-export CUSTOM_ROUTER_PATH="/path/to/custom-router.js"
-```
-
-## Token Counting
-
-The router uses `tiktoken` (cl100k_base) to estimate request token count. This is used for:
-
-- Determining if a request exceeds `longContextThreshold`
-- Custom routing logic based on token count
+Set `CUSTOM_ROUTER_PATH` environment variable to the path of your router file.
 
 ## Subagent Routing
 
-Specify models for subagents using special tags:
+Specify models for subagents using special tags in the prompt:
 
 ```
 <CCR-SUBAGENT-MODEL>provider,model</CCR-SUBAGENT-MODEL>
 Please help me analyze this code...
 ```
 
+## Token Counting
+
+The router uses `tiktoken` (cl100k_base) to estimate request token count for `longContext` routing decisions.
+
 ## Next Steps
 
-- [Transformers](/docs/config/transformers) - Apply transformations to requests
-- [Custom Router](/docs/advanced/custom-router) - Advanced custom routing
+- [Transformers](/docs/server/config/transformers) - Apply transformations to requests
+- [Custom Router](/docs/server/advanced/custom-router) - Advanced custom routing

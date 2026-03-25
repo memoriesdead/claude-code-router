@@ -197,10 +197,20 @@ export interface ConversionOptions {
   sourceProvider: "openai" | "anthropic";
 }
 
+export type AuthType = "api_key" | "browser" | "oauth";
+
+export interface BrowserAuthConfig {
+  sessionFile?: string;
+  cookieFile?: string;
+  userAgent?: string;
+}
+
 export interface LLMProvider {
   name: string;
   baseUrl: string;
-  apiKey: string;
+  apiKey?: string;  // Optional for browser auth
+  authType?: AuthType;  // Type of authentication
+  browserAuth?: BrowserAuthConfig;  // Browser session config
   models: string[];
   transformer?: {
     [key: string]: {
@@ -228,7 +238,9 @@ export interface RequestRouteInfo {
 export interface ConfigProvider {
   name: string;
   api_base_url: string;
-  api_key: string;
+  api_key?: string;  // Optional for browser auth
+  auth_type?: AuthType;  // Type of authentication
+  browser_auth?: BrowserAuthConfig;  // Browser session config
   models: string[];
   transformer: {
     use?: string[] | Array<any>[];
