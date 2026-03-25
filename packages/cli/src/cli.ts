@@ -15,7 +15,7 @@ import { spawn, exec } from "child_process";
 import {getPresetDir, loadConfigFromManifest, PID_FILE, readPresetFile, REFERENCE_COUNT_FILE} from "@CCR/shared";
 import fs, { existsSync, readFileSync } from "fs";
 import { join } from "path";
-import { parseStatusLineData, StatusLineInput } from "./utils/statusline";
+import { parseStatusLineData, StatusLineInput } from "./utils/status";
 import {handlePresetCommand} from "./utils/preset";
 import { handleInstallCommand } from "./utils/installCommand";
 import { needsSetup, runSetupWizard } from "./utils/setupWizard";
