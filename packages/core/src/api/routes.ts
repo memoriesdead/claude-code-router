@@ -88,7 +88,7 @@ async function handleTransformerEndpoint(
     );
 
     // Format and return response
-    return formatResponse(finalResponse, reply, body);
+    return formatResponse(finalResponse, reply, requestBody);
   } catch (error: any) {
     // Handle fallback if error occurs
     if (error.code === 'provider_response_error') {
@@ -182,7 +182,7 @@ async function handleFallback(
       req.log.info(`Fallback model ${fallbackModel} succeeded`);
 
       // Format and return response
-      return formatResponse(finalResponse, reply, newBody);
+      return formatResponse(finalResponse, reply, requestBody);
     } catch (fallbackError: any) {
       req.log.warn(`Fallback model ${fallbackModel} failed: ${fallbackError.message}`);
       continue;
@@ -332,10 +332,9 @@ async function sendRequestToProvider(
     }
   }
 
-  // Send HTTP request
-  // Prepare headers - skip Authorization for browser auth
+  // Prepare headers. Browser auth providers inject their own Authorization header.
   const requestHeaders: Record<string, string> = {};
-  if (provider.authType !== "browser" && provider.apiKey) {
+  if (provider.authType !== "browser" && provider.apiKey?.trim()) {
     requestHeaders.Authorization = `Bearer ${provider.apiKey}`;
   }
   Object.assign(requestHeaders, config?.headers || {});
@@ -502,6 +501,19 @@ export const registerApiRoutes = async (
             baseUrl: { type: "string" },
             apiKey: { type: "string" },
             auth_type: { type: "string", enum: ["api_key", "browser"] },
+            authType: { type: "string", enum: ["api_key", "browser"] },
+            browserAuth: {
+              type: "object",
+              properties: {
+                authFile: { type: "string" },
+              },
+            },
+            browser_auth: {
+              type: "object",
+              properties: {
+                auth_file: { type: "string" },
+              },
+            },
             models: { type: "array", items: { type: "string" } },
           },
           required: ["id", "name", "type", "baseUrl", "models"],
@@ -513,7 +525,15 @@ export const registerApiRoutes = async (
       reply: FastifyReply
     ) => {
       // Validation
-      const { name, baseUrl, apiKey, auth_type, models } = request.body;
+      const body = request.body as any;
+      const { name, baseUrl, apiKey, models } = body;
+      const authType = body.authType || body.auth_type;
+      const browserAuth = body.browserAuth || (body.browser_auth
+        ? {
+            ...body.browser_auth,
+            authFile: body.browser_auth.authFile || body.browser_auth.auth_file,
+          }
+        : undefined);
 
       if (!name?.trim()) {
         throw createApiError(
@@ -531,11 +551,8 @@ export const registerApiRoutes = async (
         );
       }
 
-      if (!apiKey?.trim()) {
-        // For browser auth, API key is optional
-        if (request.body.type !== "browser" && request.body.auth_type !== "browser") {
-          throw createApiError("API key is required", 400, "invalid_request");
-        }
+      if (authType !== "browser" && !apiKey?.trim()) {
+        throw createApiError("API key is required", 400, "invalid_request");
       }
 
       if (!models || !Array.isArray(models) || models.length === 0) {
@@ -555,7 +572,11 @@ export const registerApiRoutes = async (
         );
       }
 
-      return fastify.providerService.registerProvider(request.body);
+      return fastify.providerService.registerProvider({
+        ...body,
+        authType,
+        browserAuth,
+      });
     }
   );
 

@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # ccr model
 
-Interactive model selection and configuration.
+Manage the router's active `provider,model` entries.
 
 ## Usage
 
@@ -12,98 +12,69 @@ Interactive model selection and configuration.
 ccr model [command]
 ```
 
-## Commands
+## Common Commands
 
-### Select Model
-
-Interactively select a model:
+### Interactive Selection
 
 ```bash
 ccr model
 ```
 
-This displays an interactive menu with all configured providers and models.
+This opens an interactive picker based on the providers and models in `~/.claude-code-router/config.json`.
 
-### Set Default Model
-
-Set the default model directly:
+### Set the Default Model
 
 ```bash
 ccr model set <provider>,<model>
 ```
 
-Examples:
+Recommended example:
 
 ```bash
-ccr model set gemini,gemini-3.1-pro
-ccr model set chatgpt,gpt-5.4-turbo
-ccr model set chatgpt,gpt-4o
+ccr model set chatgpt,gpt-5.4
 ```
 
-### List Models
-
-List all configured models:
+### List Configured Models
 
 ```bash
 ccr model list
 ```
 
-### Add Model
-
-Add a new model to configuration:
+### Add a Model
 
 ```bash
 ccr model add <provider>,<model>
 ```
 
-### Remove Model
+Example:
 
-Remove a model from configuration:
+```bash
+ccr model add chatgpt,gpt-4o
+```
+
+### Remove a Model
 
 ```bash
 ccr model remove <provider>,<model>
 ```
 
-## In-Session Model Switching
-
-While using Claude Code via `ccr code`, you can switch models on-the-fly by typing `/model` followed by `provider,model`:
-
-```
-/model gemini,gemini-3.1-pro
-/model chatgpt,gpt-5.4-turbo
-/model chatgpt,gpt-4o
-/model openrouter,anthropic/claude-opus-4-20250514
-```
-
-This bypasses all scenario routing and sends requests directly to the specified provider+model. The switch takes effect immediately for subsequent messages.
-
-## Examples
-
-### Interactive selection
-
-```bash
-$ ccr model
-
-? Select a provider: gemini
-? Select a model: gemini-3.1-pro
-
-Default model set to: gemini,gemini-3.1-pro
-```
-
-### View current configuration
+## Example Output
 
 ```bash
 $ ccr model list
 
 Configured Models:
-  gemini,gemini-3.1-pro (default)
-  gemini,gemini-2.5-pro
-  gemini,gemini-2.5-flash
-  chatgpt,gpt-5.4-turbo (think)
+  chatgpt,gpt-5.4 (default)
   chatgpt,gpt-4o
 ```
 
-## Related Commands
+## Notes
 
-- [ccr start](/docs/cli/commands/start) - Start the server
-- [ccr status](/docs/cli/commands/status) - View service status
+- changing the router model does not change Claude Code's branding in the UI
+- the important value is the routed `provider,model`
+- for this fork, the recommended default is `chatgpt,gpt-5.4`
+
+## Related Pages
+
+- [Quick Start](/docs/cli/quick-start)
+- [Routing Configuration](/docs/server/config/routing)

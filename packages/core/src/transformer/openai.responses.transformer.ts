@@ -74,6 +74,9 @@ export class OpenAIResponsesTransformer implements Transformer {
     delete request.temperature;
     delete request.max_tokens;
 
+    (request as any).store = false;
+    request.stream = true;
+
     // 处理 reasoning 参数
     if (request.reasoning) {
       (request as any).reasoning = {
@@ -88,23 +91,30 @@ export class OpenAIResponsesTransformer implements Transformer {
       (msg) => msg.role === "system"
     );
     if (systemMessages.length > 0) {
-      const firstSystem = systemMessages[0];
-      if (Array.isArray(firstSystem.content)) {
-        firstSystem.content.forEach((item) => {
-          let text = "";
-          if (typeof item === "string") {
-            text = item;
-          } else if (item && typeof item === "object" && "text" in item) {
-            text = (item as { text: string }).text;
-          }
-          input.push({
-            role: "system",
-            content: text,
-          });
-        });
-      } else {
-        (request as any).instructions = firstSystem.content;
-      }
+      const instructionParts = systemMessages.flatMap((message) => {
+        if (Array.isArray(message.content)) {
+          return message.content
+            .map((item) => {
+              if (typeof item === "string") return item;
+              if (item && typeof item === "object" && "text" in item) {
+                return (item as { text: string }).text;
+              }
+              return "";
+            })
+            .filter((text) => text.length > 0);
+        }
+
+        if (typeof message.content === "string") {
+          return [message.content];
+        }
+
+        return [];
+      });
+
+      (request as any).instructions =
+        instructionParts.length > 0
+          ? instructionParts.join("\n\n")
+          : "You are a helpful coding assistant.";
     }
 
     request.messages.forEach((message) => {
@@ -207,7 +217,21 @@ export class OpenAIResponsesTransformer implements Transformer {
     const contentType = response.headers.get("Content-Type") || "";
 
     if (contentType.includes("application/json")) {
-      const jsonResponse: any = await response.json();
+      const rawText = await response.text();
+
+      if (this.looksLikeEventStream(rawText)) {
+        return this.transformResponseOut(
+          new Response(rawText, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: {
+              "Content-Type": "text/event-stream",
+            },
+          })
+        );
+      }
+
+      const jsonResponse: any = JSON.parse(rawText);
 
       // 检查是否为responses API格式的JSON响应
       if (jsonResponse.object === "response" && jsonResponse.output) {
@@ -604,7 +628,29 @@ export class OpenAIResponsesTransformer implements Transformer {
       });
     }
 
-    return response;
+    const rawText = await response.text();
+    if (this.looksLikeEventStream(rawText)) {
+      return this.transformResponseOut(
+        new Response(rawText, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: {
+            "Content-Type": "text/event-stream",
+          },
+        })
+      );
+    }
+
+    return new Response(rawText, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  }
+
+  private looksLikeEventStream(payload: string): boolean {
+    const trimmed = payload.trimStart();
+    return trimmed.startsWith("event: ") || trimmed.startsWith("data: ");
   }
 
   private normalizeRequestContent(content: any, role: string | undefined) {

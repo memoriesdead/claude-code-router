@@ -44,6 +44,14 @@ The preset will:
 - Apply preset routing rules
 - Use transformers configured in the preset
 
+If you are following the main ChatGPT 5.4 setup documented in this repo, presets are optional. The simplest path is still:
+
+```bash
+codex login
+ccr start
+chat
+```
+
 #### List All Presets
 
 ```bash
@@ -74,7 +82,7 @@ Web UI provides a more friendly visual interface with additional installation me
 ccr ui
 ```
 
-Then open `http://localhost:3000` in your browser.
+Then open the URL printed by `ccr ui` in your browser.
 
 #### Install from GitHub Repository
 
@@ -643,5 +651,5 @@ Each preset is a directory containing a `manifest.json` file.
 
 ## Next Steps
 
-- [CLI Reference](/docs/cli/start) - Complete CLI command reference
-- [Configuration](/docs/config/basic) - Detailed configuration guide
+- [CLI Reference](/docs/cli/commands/start) - Complete CLI command reference
+- [Configuration](/docs/server/config/basic) - Detailed configuration guide

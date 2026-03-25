@@ -1,125 +1,173 @@
 # Claude Code Router - Custom Fork
 
-A proxy that routes Claude Code requests to different LLM providers instead of Anthropic.
+Use Claude Code as the shell and tools, but route the actual model to ChatGPT 5.4 through Codex subscription auth.
 
-## 🚀 Quick Start
+This fork keeps the Claude Code terminal workflow and routes requests through a local compatibility layer. In simple words:
+
+- Claude Code is still the app you use.
+- ChatGPT 5.4 is the model underneath.
+- `codex login` is the auth step that matters.
+
+## What This Setup Does
+
+- Keeps Claude Code commands, tools, and terminal workflow
+- Routes Claude Code requests through `claude-code-router`
+- Uses ChatGPT subscription auth from Codex instead of an OpenAI API key
+- Makes `gpt-5.4` the default routed model
+
+## Recommended Path
+
+This fork is documented around one clean path first:
+
+1. Install Claude Code
+2. Install Codex and log in with the ChatGPT account you want to use
+3. Install this router fork
+4. Start the router and open Claude Code through it
+
+## Install
+
+Install Claude Code:
 
 ```bash
-# 1. Install
+npm install -g @anthropic-ai/claude-code
+```
+
+Install Codex:
+
+```bash
+npm install -g @openai/codex
+```
+
+Log in with the ChatGPT account you want to use:
+
+```bash
+codex login
+```
+
+Install this fork:
+
+```bash
 npm install -g github:memoriesdead/claude-code-router
-
-# 2. Start the router
-ccr start
-
-# 3. Use with Claude Code
-export ANTHROPIC_BASE_URL="http://localhost:3456/v1"
-export ANTHROPIC_AUTH_TOKEN="dummy"
-claude
 ```
-
-**For VS Code** - add to `.vscode/settings.json`:
-```json
-{
-  "anthropic.baseUrl": "http://localhost:3456",
-  "anthropic.apiKey": "dummy"
-}
-```
-
-## ✨ Features
-
-- **Model Routing**: Route requests to different models (default, background, think, long context, web search)
-- **Gemini 3.1 Pro**: Free API with 1M+ token context, powerful reasoning
-- **ChatGPT via Codex OAuth**: Use your ChatGPT Plus subscription ($20/mo) - no separate API billing
-- **Dynamic Model Switching**: Switch models on-the-fly with `/model provider,model`
-- **CLI Management**: `ccr start`, `ccr stop`, `ccr model`, `ccr ui`
-
-## Cost Strategy
-
-| Provider | Cost | Setup |
-|----------|-------|-------|
-| **Gemini 3.1 Pro** | FREE - Get key from https://aistudio.google.com/apikey |
-| **ChatGPT Plus** | $20/mo subscription - `npm install -g @openai/codex && codex login` |
-| **OpenRouter** | Pay-per-token fallback |
-
-**Important**: Google subscriptions ($19.99/mo Pro, $42/mo Ultra) are web chat only - NO API access. Use the free API key.
 
 ## Configuration
 
-Router config is at `~/.claude-code-router/config.json`:
+Create `~/.claude-code-router/config.json`:
 
 ```json
 {
   "LOG": true,
   "LOG_LEVEL": "info",
+  "API_TIMEOUT_MS": 3000000,
   "Providers": [
     {
-      "name": "gemini",
-      "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
-      "api_key": "$GEMINI_API_KEY",
-      "models": ["gemini-3.1-pro", "gemini-2.5-pro", "gemini-2.5-flash"],
-      "transformer": { "use": ["gemini"] }
-    },
-    {
       "name": "chatgpt",
-      "api_base_url": "https://api.openai.com/v1/chat/completions",
+      "api_base_url": "https://chatgpt.com/backend-api/codex/responses",
       "auth_type": "browser",
-      "models": ["gpt-5.4-turbo", "gpt-4o"],
-      "transformer": { "use": ["browser-auth"] }
+      "models": ["gpt-5.4"],
+      "transformer": {
+        "use": ["openai-responses", "browser-auth"]
+      }
     }
   ],
   "Router": {
-    "default": "gemini,gemini-3.1-pro",
-    "background": "gemini,gemini-2.5-flash",
-    "think": "chatgpt,gpt-5.4-turbo",
-    "longContext": "gemini,gemini-2.5-pro",
-    "webSearch": "gemini,gemini-2.5-flash"
+    "default": "chatgpt,gpt-5.4",
+    "background": "chatgpt,gpt-5.4",
+    "think": "chatgpt,gpt-5.4",
+    "longContext": "chatgpt,gpt-5.4",
+    "longContextThreshold": 60000,
+    "webSearch": "chatgpt,gpt-5.4"
+  },
+  "fallback": {
+    "default": [],
+    "background": [],
+    "think": [],
+    "longContext": [],
+    "webSearch": []
   }
 }
 ```
 
-## CLI Commands
+### Why This Config
 
-| Command | Description |
-|---------|-------------|
-| `ccr start` | Start the router |
-| `ccr stop` | Stop the router |
-| `ccr restart` | Restart the router (apply config changes) |
-| `ccr status` | Show router status |
-| `ccr model` | Interactive model selection |
-| `ccr ui` | Open web UI in browser |
-| `ccr code "message"` | Run Claude Code through router |
+- `auth_type: "browser"` tells the router to use the Codex browser login token
+- `browser-auth` reads the Codex auth file and adds the ChatGPT headers
+- `openai-responses` adapts Claude Code traffic to the ChatGPT responses endpoint
+- all routing scenarios point to `chatgpt,gpt-5.4`
 
-## Model Switching
+You do not need an OpenAI API key for this setup.
 
-In Claude Code, use `/model` to switch models:
+## Start and Use
 
-```
-/model gemini,gemini-3.1-pro      # Free, fast
-/model chatgpt,gpt-5.4-turbo       # Think mode, extended reasoning
-/model chatgpt,gpt-4o              # ChatGPT 4o
-```
-
-## Environment Variables
+Start the router:
 
 ```bash
-export ANTHROPIC_BASE_URL="http://localhost:3456/v1"
-export ANTHROPIC_AUTH_TOKEN="dummy"
+ccr start
 ```
 
-Or use the built-in activate command:
+Open Claude Code through the router:
+
 ```bash
-eval "$(ccr activate)"
+chat
 ```
 
-## Codex OAuth Setup (ChatGPT Plus)
+You can also use:
 
 ```bash
-npm install -g @openai/codex
+ccr code
+```
+
+Useful commands:
+
+```bash
+ccr status
+ccr restart
+ccr model
+```
+
+## What You Should Expect
+
+- Claude Code still looks like Claude Code
+- some UI text can still say `Claude`, `Opus`, or `Sonnet`
+- the routed model underneath is `chatgpt,gpt-5.4`
+
+Simple version:
+
+- Claude Code shell
+- ChatGPT 5.4 brain
+
+## Troubleshooting
+
+### `chat` says the model does not exist or you do not have access
+
+Usually this means the Codex login is not usable for the account you want. Run:
+
+```bash
 codex login
 ```
 
-The `browser-auth` transformer reads `~/.codex/auth.json` and injects the OAuth token as a Bearer header to the standard OpenAI API.
+Then fully close Claude Code and run:
 
-## GitHub Repository
+```bash
+chat
+```
 
-https://github.com/memoriesdead/claude-code-router
+### `claude` asks you to log in
+
+Use `chat`, not plain `claude`.
+
+- `claude` opens Claude Code without the router
+- `chat` opens Claude Code through the router
+
+### The UI still says `Opus` or `Sonnet`
+
+That is normal. Those are Claude Code UI labels. The routed backend can still be ChatGPT 5.4 underneath.
+
+## Docs
+
+- [CLI Introduction](docs/docs/cli/intro.md)
+- [Quick Start](docs/docs/cli/quick-start.md)
+- [Providers Configuration](docs/docs/server/config/providers.md)
+- [Routing Configuration](docs/docs/server/config/routing.md)
+- [Transformers](docs/docs/server/config/transformers.md)
+- [ccr model](docs/docs/cli/commands/model.md)

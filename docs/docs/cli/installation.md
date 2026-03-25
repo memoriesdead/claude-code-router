@@ -4,31 +4,19 @@ sidebar_position: 2
 
 # Installation
 
-Install Claude Code Router globally using your preferred package manager.
+Install this Claude Code Router fork globally.
 
 ## Prerequisites
 
-- **Node.js**: >= 20.0.0
-- **pnpm**: >= 8.0.0 (if using pnpm)
-- A free Gemini API key from https://aistudio.google.com/apikey
-- (Optional) ChatGPT Plus subscription + OpenAI Codex CLI for GPT-5.4 access
+- **Node.js**: >= 18.0.0
+- **pnpm**: >= 8.0.0 if you use pnpm
+- Claude Code installed
+- Codex installed if you want the ChatGPT subscription path
 
-## Install via npm
-
-```bash
-npm install -g @musistudio/claude-code-router
-```
-
-## Install via pnpm
+## Install the Fork
 
 ```bash
-pnpm add -g @musistudio/claude-code-router
-```
-
-## Install via Yarn
-
-```bash
-yarn global add @musistudio/claude-code-router
+npm install -g github:memoriesdead/claude-code-router
 ```
 
 ## Verify Installation
@@ -39,8 +27,10 @@ After installation, verify that `ccr` is available:
 ccr --version
 ```
 
-You should see the version number displayed.
-
 ## Next Steps
 
-Once installed, proceed to [Quick Start](/docs/quick-start) to configure and start using the router.
+For the recommended setup in this fork:
+
+1. install Codex with `npm install -g @openai/codex`
+2. run `codex login`
+3. continue with [Quick Start](/docs/cli/quick-start)

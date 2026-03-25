@@ -18,22 +18,19 @@ The configuration file is located at:
 
 ### Providers
 
-Configure LLM providers to route requests to:
+The recommended setup in this repo uses one ChatGPT provider with Codex browser auth:
 
 ```json
 {
   "Providers": [
     {
-      "NAME": "deepseek",
-      "HOST": "https://api.deepseek.com",
-      "APIKEY": "your-api-key",
-      "MODELS": ["deepseek-chat", "deepseek-coder"]
-    },
-    {
-      "NAME": "groq",
-      "HOST": "https://api.groq.com/openai/v1",
-      "APIKEY": "your-groq-api-key",
-      "MODELS": ["llama-3.3-70b-versatile"]
+      "name": "chatgpt",
+      "api_base_url": "https://chatgpt.com/backend-api/codex/responses",
+      "auth_type": "browser",
+      "models": ["gpt-5.4"],
+      "transformer": {
+        "use": ["openai-responses", "browser-auth"]
+      }
     }
   ]
 }
@@ -46,7 +43,7 @@ Configure which model to use by default:
 ```json
 {
   "Router": {
-    "default": "deepseek,deepseek-chat"
+    "default": "chatgpt,gpt-5.4"
   }
 }
 ```
@@ -55,16 +52,13 @@ Format: `{provider-name},{model-name}`
 
 ### Transformers
 
-Apply transformations to requests/responses:
+For the ChatGPT subscription path, use:
 
 ```json
 {
-  "transformers": [
-    {
-      "name": "anthropic",
-      "providers": ["deepseek", "groq"]
-    }
-  ]
+  "transformer": {
+    "use": ["openai-responses", "browser-auth"]
+  }
 }
 ```
 
@@ -76,60 +70,49 @@ Use environment variables in your configuration:
 {
   "Providers": [
     {
-      "NAME": "deepseek",
-      "HOST": "https://api.deepseek.com",
-      "APIKEY": "$DEEPSEEK_API_KEY"
+      "name": "openai-api-key-provider",
+      "api_base_url": "https://api.openai.com/v1/responses",
+      "api_key": "$OPENAI_API_KEY",
+      "models": ["gpt-4.1"]
     }
   ]
 }
 ```
 
-Both `$VAR_NAME` and `${VAR_NAME}` syntax are supported.
+Both `$VAR_NAME` and `${VAR_NAME}` syntax are supported. For the documented ChatGPT subscription setup, use `auth_type: "browser"` instead of `api_key`.
 
 ## Complete Example
 
 ```json
 {
-  "port": 8080,
+  "LOG": true,
+  "LOG_LEVEL": "info",
+  "API_TIMEOUT_MS": 3000000,
   "Providers": [
     {
-      "NAME": "deepseek",
-      "HOST": "https://api.deepseek.com",
-      "APIKEY": "$DEEPSEEK_API_KEY",
-      "MODELS": ["deepseek-chat", "deepseek-coder"],
-      "transformers": ["anthropic"]
-    },
-    {
-      "NAME": "groq",
-      "HOST": "https://api.groq.com/openai/v1",
-      "APIKEY": "$GROQ_API_KEY",
-      "MODELS": ["llama-3.3-70b-versatile"],
-      "transformers": ["anthropic"]
+      "name": "chatgpt",
+      "api_base_url": "https://chatgpt.com/backend-api/codex/responses",
+      "auth_type": "browser",
+      "models": ["gpt-5.4", "gpt-4o"],
+      "transformer": {
+        "use": ["openai-responses", "browser-auth"]
+      }
     }
   ],
   "Router": {
-    "default": "deepseek,deepseek-chat",
-    "longContextThreshold": 100000,
-    "background": "groq,llama-3.3-70b-versatile"
-  },
-  "transformers": [
-    {
-      "name": "anthropic",
-      "providers": ["deepseek", "groq"]
-    }
-  ]
+    "default": "chatgpt,gpt-5.4",
+    "background": "chatgpt,gpt-5.4",
+    "think": "chatgpt,gpt-5.4",
+    "longContext": "chatgpt,gpt-5.4",
+    "longContextThreshold": 60000,
+    "webSearch": "chatgpt,gpt-5.4"
+  }
 }
 ```
 
 ## Editing Configuration
 
-Use the CLI to edit the configuration:
-
-```bash
-ccr config edit
-```
-
-This will open the configuration file in your default editor.
+Edit `~/.claude-code-router/config.json` directly or use `ccr ui`.
 
 ## Reloading Configuration
 
@@ -141,6 +124,6 @@ ccr restart
 
 ## Next Steps
 
-- [Providers Configuration](/docs/config/providers) - Detailed provider configuration
-- [Routing Configuration](/docs/config/routing) - Configure routing rules
-- [Transformers](/docs/config/transformers) - Apply transformations
+- [Providers Configuration](/docs/server/config/providers) - Detailed provider configuration
+- [Routing Configuration](/docs/server/config/routing) - Configure routing rules
+- [Transformers](/docs/server/config/transformers) - Apply transformations

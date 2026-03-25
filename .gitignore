@@ -10,3 +10,8 @@ tsconfig.tsbuildinfo
 # Documentation build output
 docs/build
 docs/.docusaurus
+
+# Local Codex probing artifacts
+codex-app-server.schema.json
+tmp-codex-probe.json
+tmp-codex-schema/

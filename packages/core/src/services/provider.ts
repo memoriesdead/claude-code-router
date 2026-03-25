@@ -29,12 +29,15 @@ export class ProviderService {
   private initializeFromProvidersArray(providersConfig: ConfigProvider[]) {
     providersConfig.forEach((providerConfig: ConfigProvider) => {
       try {
-        // For browser auth, apiKey is not required
-        const needsApiKey = providerConfig.auth_type !== "browser";
+        const hasApiKey =
+          typeof providerConfig.api_key === "string" &&
+          providerConfig.api_key.trim().length > 0;
+        const isBrowserAuth = providerConfig.auth_type === "browser";
+
         if (
           !providerConfig.name ||
           !providerConfig.api_base_url ||
-          (needsApiKey && !providerConfig.api_key)
+          (!hasApiKey && !isBrowserAuth)
         ) {
           this.logger.warn(`Skipping provider ${providerConfig.name}: missing required fields`);
           return;
@@ -91,7 +94,14 @@ export class ProviderService {
           baseUrl: providerConfig.api_base_url,
           apiKey: providerConfig.api_key,
           authType: providerConfig.auth_type,
-          browserAuth: providerConfig.browser_auth,
+          browserAuth: providerConfig.browser_auth
+            ? {
+                ...providerConfig.browser_auth,
+                authFile:
+                  providerConfig.browser_auth.authFile ||
+                  providerConfig.browser_auth.auth_file,
+              }
+            : undefined,
           models: providerConfig.models || [],
           transformer: providerConfig.transformer ? transformer : undefined,
         });

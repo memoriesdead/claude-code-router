@@ -200,6 +200,9 @@ export interface ConversionOptions {
 export type AuthType = "api_key" | "browser" | "oauth";
 
 export interface BrowserAuthConfig {
+  authFile?: string;
+  auth_file?: string;
+  codexAuthFile?: string;
   sessionFile?: string;
   cookieFile?: string;
   userAgent?: string;
@@ -208,9 +211,9 @@ export interface BrowserAuthConfig {
 export interface LLMProvider {
   name: string;
   baseUrl: string;
-  apiKey?: string;  // Optional for browser auth
-  authType?: AuthType;  // Type of authentication
-  browserAuth?: BrowserAuthConfig;  // Browser session config
+  apiKey?: string;
+  authType?: AuthType;
+  browserAuth?: BrowserAuthConfig;
   models: string[];
   transformer?: {
     [key: string]: {
@@ -238,9 +241,9 @@ export interface RequestRouteInfo {
 export interface ConfigProvider {
   name: string;
   api_base_url: string;
-  api_key?: string;  // Optional for browser auth
-  auth_type?: AuthType;  // Type of authentication
-  browser_auth?: BrowserAuthConfig;  // Browser session config
+  api_key?: string;
+  auth_type?: AuthType;
+  browser_auth?: BrowserAuthConfig;
   models: string[];
   transformer: {
     use?: string[] | Array<any>[];
