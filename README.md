@@ -23,6 +23,7 @@
 
 - **Model Routing**: Route requests to different models based on your needs (e.g., background tasks, thinking, long context).
 - **Multi-Provider Support**: Supports various model providers like OpenRouter, DeepSeek, Ollama, Gemini, Volcengine, and SiliconFlow.
+- **Browser-Based Authentication**: Use subscription accounts (ChatGPT Plus, Claude Pro) via browser cookies/sessions instead of API keys. See [BROWSER_AUTH.md](BROWSER_AUTH.md) for details.
 - **Request/Response Transformation**: Customize requests and responses for different providers using transformers.
 - **Dynamic Model Switching**: Switch models on-the-fly within Claude Code using the `/model` command.
 - **CLI Model Management**: Manage models and providers directly from the terminal with `ccr model`.

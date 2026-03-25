@@ -41,7 +41,12 @@
   "pnpm": {
     "overrides": {
       "@types/react": "18"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "core-js",
+      "core-js-pure",
+      "esbuild"
+    ]
   },
   "engines": {
     "node": ">=20.0.0",
