@@ -1,4 +1,40 @@
 import { getServiceInfo } from './processCheck';
+import { readConfigFile } from './index';
+
+export interface StatusLineInput {
+    model?: string;
+    provider?: string;
+}
+
+export async function parseStatusLineData(input: StatusLineInput, presetName?: string): Promise<string> {
+    try {
+        const config = await readConfigFile();
+
+        // Try to determine current model
+        let model = input.model;
+        let provider = input.provider;
+
+        // If not provided in input, try to get from config
+        if (!model && config.Router?.default) {
+            const defaultRoute = config.Router.default;
+            const parts = defaultRoute.split(',');
+            if (parts.length === 2) {
+                provider = parts[0];
+                model = parts[1];
+            }
+        }
+
+        if (!model) {
+            return "Claude";
+        }
+
+        // Format the status line
+        const displayModel = model.split('/')[0]; // Remove any prefix
+        return `${provider || 'claude'}:${displayModel}`;
+    } catch (error) {
+        return "Claude";
+    }
+}
 
 export async function showStatus() {
     const info = await getServiceInfo();
