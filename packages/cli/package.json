@@ -15,7 +15,7 @@
     "router",
     "cli"
   ],
-  "author": "musistudio",
+  "author": "memoriesdead",
   "license": "MIT",
   "devDependencies": {
     "@CCR/server": "workspace:*",

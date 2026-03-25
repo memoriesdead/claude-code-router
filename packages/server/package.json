@@ -14,7 +14,7 @@
     "router",
     "server"
   ],
-  "author": "musistudio",
+  "author": "memoriesdead",
   "license": "MIT",
   "dependencies": {
     "@fastify/multipart": "^9.0.0",

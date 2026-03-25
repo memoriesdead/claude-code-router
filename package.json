@@ -1,7 +1,12 @@
 {
-  "name": "@musistudio/claude-code-router",
+  "name": "@memoriesdead/claude-code-router",
   "version": "2.0.0",
-  "description": "Use Claude Code without an Anthropics account and route it to another LLM provider",
+  "description": "Custom Claude Code Router with Gemini 3.1 Pro and ChatGPT browser auth",
+  "homepage": "https://github.com/memoriesdead/claude-code-router",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/memoriesdead/claude-code-router"
+  },
   "scripts": {
     "build": "pnpm build:shared && pnpm build:core && pnpm build:server && pnpm build:cli && pnpm build:ui",
     "build:core": "pnpm --filter @musistudio/llms build",
@@ -30,7 +35,7 @@
     "llm",
     "anthropic"
   ],
-  "author": "musistudio",
+  "author": "memoriesdead",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.0.15",
